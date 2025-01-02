@@ -1,0 +1,126 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id              String           @id @default(uuid())
+  firstName       String
+  lastName        String
+  email           String           @unique
+  profilePicture  String?
+  googleId        String?          @unique
+  createdAt       DateTime         @default(now())
+  phoneNumber     String?
+  verified        Boolean?         @default(false)
+  salt            String
+  password        String
+  goals           Goal[]
+  journal         Journal[]
+  mentalState     MentalState[]
+  personalDetails PersonalDetails?
+  roadmaps        Roadmap[]
+  schedules       Schedule[]
+  session         Session[]
+  skills          Skill[]
+}
+model PersonalDetails {
+  id            String  @id @default(uuid())
+  studentId     String  @unique
+  collegeName   String
+  yearOfStudy   Int
+  degreeProgram String
+  fieldOfStudy  String
+  dateOfBirth   String
+  student       Student @relation(fields: [studentId], references: [id])
+}
+
+model Roadmap {
+  id          String  @id @default(cuid())
+  studentId   String
+  student     Student @relation(fields: [studentId], references: [id])  
+  data        Json 
+}
+
+
+
+
+model Skill {
+  id        String    @id @default(uuid())
+  studentId String
+  type      SkillType @default(DESIRED)
+  skillName String
+  student   Student   @relation(fields: [studentId], references: [id])
+}
+
+enum SkillType {
+  CURRENT
+  DESIRED
+  PARTIAL
+}
+
+enum GoalType {
+  PERSONAL
+  ACADEMIC
+  CAREER
+}
+
+model Goal {
+  id          String   @id @default(uuid())
+  studentId   String
+  type        GoalType
+  description String
+  createdAt   DateTime @default(now())
+  student     Student  @relation(fields: [studentId], references: [id])
+}
+
+model Schedule {
+  id            String   @id @default(uuid())
+  studentId     String
+  day           String
+  preferredTime String
+  schedule      Json
+  createdDate   String
+  student       Student  @relation(fields: [studentId], references: [id])
+  purpose       String
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expire    DateTime
+  createdAt DateTime @default(now())
+  studentId String   @unique
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model MentalState {
+  id             String    @id @default(uuid())
+  studentId      String
+  currentMood    String
+  reason         String?
+  previousMood   String?
+  previousReason String?
+  moodLog        Json?
+  lastUpdated    DateTime  @default(now()) @updatedAt
+  journalEntries Journal[]
+  student        Student   @relation(fields: [studentId], references: [id])
+
+  @@index([currentMood])
+}
+
+model Journal {
+  id            String       @id @default(uuid())
+  studentId     String
+  mentalStateId String?
+  title         String
+  content       String
+  moodSnapshot  String?
+  createdAt     DateTime     @default(now())
+  mentalState   MentalState? @relation(fields: [mentalStateId], references: [id])
+  student       Student      @relation(fields: [studentId], references: [id])
+}
